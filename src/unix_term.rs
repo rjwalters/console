@@ -94,16 +94,22 @@ pub fn read_single_key() -> io::Result<Key> {
             let read = libc::read(fd, buf[1..].as_mut_ptr() as *mut libc::c_void, 19);
             if read < 0 {
                 Err(io::Error::last_os_error())
+            } else if buf[1] == b'\x03' {
+                Err(io::Error::new(
+                    io::ErrorKind::Interrupted,
+                    "read interrupted",
+                ))
+            } else {
+                Ok(key_from_escape_codes(&buf[..(read+1) as usize]))
             }
-            read += 1;
-        }
-        if buf[0] == b'\x03' || buf[1] == b'\x03' {
+        } else if buf[0] == b'\x03' {
             Err(io::Error::new(
                 io::ErrorKind::Interrupted,
                 "read interrupted",
             ))
+        } else {
+            Ok(key_from_escape_codes(&buf[..read as usize]))
         }
-        Ok(key_from_escape_codes(&buf[..read as usize]))
     };
     termios::tcsetattr(fd, termios::TCSADRAIN, &original)?;
 
