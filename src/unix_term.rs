@@ -102,6 +102,7 @@ pub fn read_single_key() -> io::Result<Key> {
                 io::ErrorKind::Interrupted,
                 "read interrupted",
             ))
+        }
         Ok(key_from_escape_codes(&buf[..read as usize]))
     };
     termios::tcsetattr(fd, termios::TCSADRAIN, &original)?;
