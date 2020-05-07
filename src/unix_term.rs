@@ -85,7 +85,7 @@ pub fn read_single_key() -> io::Result<Key> {
     termios::cfmakeraw(&mut termios);
     termios::tcsetattr(fd, termios::TCSADRAIN, &termios)?;
 
-    let rv: io::Result = unsafe {
+    let rv: io::Result<Key> = unsafe {
         let read = libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, 1);
         if read < 0 {
             Err(io::Error::last_os_error())
