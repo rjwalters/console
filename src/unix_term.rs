@@ -88,11 +88,19 @@ pub fn read_single_key() -> io::Result<Key> {
         let read = libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, 20);
         if read < 0 {
             Err(io::Error::last_os_error())
-        } else if buf[0] == b'\x03' {
-            Err(io::Error::new(
+        } else if buf[0] == b'\x1b' {
+            // read more bytes if the first byte was the ESC code
+            let read = libc::read(fd, buf[1..].as_mut_ptr() as *mut libc::c_void, 19);
+            if read < 0 {
+                return Err(io::Error::last_os_error());
+            }
+            read += 1;
+        }
+        if buf[0] == b'\x03' || buf[1] == b'\x03' {
+            return Err(io::Error::new(
                 io::ErrorKind::Interrupted,
                 "read interrupted",
-            ))
+            ));
         } else {
             Ok(key_from_escape_codes(&buf[..read as usize]))
         }
